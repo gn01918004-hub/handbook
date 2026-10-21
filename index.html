@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>光線法手簿教學模擬器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: 左側輸入（表頭／參數／測站），右側即時產生的手簿；窄螢幕上下堆疊 */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --sunken:#f6f8f7; --ink:#1b2422; --muted:#5a6965; --line:#d3dcd9;
+  --accent:#1f5f6b; --accent-ink:#ffffff; --stamp:#b8860b; --aux:#7a4fa3;
+  --ok:#2e7a4c; --bad:#b42318; --bad-bg:#fdecea;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111715; --surface:#19211f; --sunken:#151c1a; --ink:#e3eae7; --muted:#93a29d; --line:#2b3633;
+  --accent:#71b8c5; --accent-ink:#0d1a1d; --stamp:#e2b93b; --aux:#c39be6;
+  --ok:#6fcf97; --bad:#f97066; --bad-bg:#3a1a17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111715; --surface:#19211f; --sunken:#151c1a; --ink:#e3eae7; --muted:#93a29d; --line:#2b3633;
+  --accent:#71b8c5; --accent-ink:#0d1a1d; --stamp:#e2b93b; --aux:#c39be6;
+  --ok:#6fcf97; --bad:#f97066; --bad-bg:#3a1a17; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
+.wrap{padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;flex-direction:column;gap:2px}
+h1{font-family:var(--f-display);font-size:1.6rem;margin:0;text-wrap:balance;letter-spacing:.02em}
+.sub{color:var(--muted);margin:2px 0 0;max-width:72ch}
+.grid{display:grid;grid-template-columns:minmax(0,540px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel h2{font-size:.78rem;letter-spacing:.14em;color:var(--muted);margin:0;font-weight:700}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 10px}
+.fields.wide{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:.78rem;color:var(--muted);min-width:0}
+.span2{grid-column:span 2}
+.full{grid-column:1/-1}
+@media (max-width:460px){.span2{grid-column:auto}}
+input,select,textarea{font:inherit;font-size:.9rem;color:var(--ink);background:var(--sunken);border:1px solid var(--line);border-radius:4px;padding:5px 7px;min-width:0;width:100%}
+input.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input.bad{border-color:var(--bad);background:var(--bad-bg)}
+.hint{font-size:.78rem;color:var(--muted);margin:0}
+.hint code{font-family:var(--f-mono);background:var(--sunken);padding:0 4px;border-radius:3px}
+button{font:inherit;font-size:.85rem;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:3px 6px}
+button.ghost:hover{color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inst-row{display:flex;gap:8px;align-items:end}
+.inst-row label.f{flex:1}
+.inst-form{border:1px dashed var(--line);border-radius:4px;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px 10px;align-items:end}
+.station{border:1px solid var(--line);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;min-width:0}
+.st-head{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:end;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--sunken);border-radius:6px 6px 0 0}
+.st-head .lbl{font-family:var(--f-display);font-weight:700;font-size:1rem;align-self:center}
+.st-head label.f{width:110px}
+.st-head .sp{flex:1}
+.scroll{overflow-x:auto;min-width:0}
+table.pts{border-collapse:collapse;width:100%;min-width:640px}
+table.pts th{font-size:.72rem;font-weight:600;color:var(--muted);text-align:left;padding:6px 4px;white-space:nowrap}
+table.pts td{padding:3px 4px;vertical-align:middle}
+table.pts td:first-child,table.pts th:first-child{padding-left:12px}
+table.pts input[type=checkbox]{width:auto}
+table.pts .c-name{width:72px}.c-role{width:78px}.c-known{width:40px;text-align:center}.c-ha,.c-za{width:108px}.c-d{width:92px}.c-ht{width:66px}.c-x{width:30px}
+.st-foot{padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px dashed var(--line)}
+.warn{color:var(--bad);font-size:.78rem}
+/* 手簿 */
+.book{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 18px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.book-title{border-bottom:2px solid var(--ink);padding-bottom:8px}
+.book-title h3{font-family:var(--f-display);font-size:1.35rem;margin:0;letter-spacing:.2em}
+.book h4{font-family:var(--f-display);font-size:.98rem;margin:0}
+.meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0;border:1px solid var(--ink)}
+.meta div{padding:5px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;gap:8px;min-width:0}
+.meta b{font-weight:500;color:var(--muted);font-size:.78rem;white-space:nowrap;padding-top:1px}
+.meta span{font-family:var(--f-mono);font-size:.85rem;overflow-wrap:anywhere}
+table.bk{border-collapse:collapse;width:100%;min-width:1040px;font-size:.82rem}
+table.bk.narrow{min-width:640px}
+table.bk caption{text-align:left;font-family:var(--f-display);font-weight:700;font-size:.98rem;padding:4px 0 6px}
+table.bk caption small{font-family:var(--f-body);font-weight:400;color:var(--muted);font-size:.8rem;margin-left:10px}
+table.bk th,table.bk td{border:1px solid var(--line);padding:3px 6px;text-align:center;white-space:nowrap}
+table.bk thead th{background:var(--sunken);font-weight:600;font-size:.74rem;color:var(--muted)}
+table.bk td.m{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+table.bk tr.r td{border-bottom:1.5px solid var(--muted)}
+table.bk td.err{font-weight:600}
+table.bk td.over{color:var(--bad)}
+table.bk td.okc{color:var(--ok)}
+table.bk td.left{text-align:left;white-space:normal}
+.role{display:inline-block;font-size:.7rem;padding:0 6px;border-radius:3px;border:1px solid var(--line)}
+.role.bs{border-color:var(--accent);color:var(--accent)}
+.role.ck{border-color:var(--stamp);color:var(--stamp)}
+.role.aux{border-color:var(--aux);color:var(--aux)}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.sum{border:1px solid var(--line);border-radius:4px;padding:8px 10px;background:var(--sunken);font-size:.8rem;display:flex;flex-direction:column;gap:2px}
+.sum strong{font-family:var(--f-display);font-size:.92rem}
+.sum .m{font-family:var(--f-mono)}
+.pill{display:inline-block;font-size:.72rem;padding:0 7px;border-radius:9px;font-weight:600}
+.pill.ok{color:var(--ok);border:1px solid var(--ok)}
+.pill.bad{color:var(--bad);border:1px solid var(--bad)}
+.foot{font-size:.78rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;margin:0}
+textarea{font-family:var(--f-mono);font-size:.75rem;min-height:110px}
+details summary{cursor:pointer;color:var(--muted);font-size:.82rem}
+.toast{font-size:.8rem;color:var(--ok)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.print-foot{display:none}
+@page{size:A4 landscape;margin:12mm 10mm 16mm}
+@media print{
+  :root{--bg:#fff;--surface:#fff;--sunken:#f3f3f3;--ink:#000;--muted:#444;--line:#999;--accent:#000;--stamp:#000;--aux:#000;--ok:#000;--bad:#000}
+  body{background:#fff;font-size:11px}
+  #editor,header.top,.no-print,#tsv-fallback,.sumgrid{display:none!important}
+  .wrap{padding:0;max-width:none}
+  .grid{display:block}
+  .book{border:0;padding:0;gap:8px}
+  .scroll{overflow:visible}
+  table.bk{min-width:0;font-size:10px;page-break-inside:auto}
+  table.bk tr{page-break-inside:avoid}
+  table.bk thead{display:table-header-group}
+  .print-foot{display:block;position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:9px;color:#000;border-top:1px solid #999;padding-top:2px;background:#fff}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>光線法手簿教學模擬器</h1>
+    <p class="sub">輸入每個點的正確水平角、天頂角與距離，工具會產生正倒鏡讀數與兩次測距。放樣點、補點的平均值等於輸入值；已知點會加入一個小偏差，並在最後一欄記下較正確值的差。</p>
+  </header>
+
+  <div class="grid">
+    <div class="col" id="editor">
+      <section class="panel">
+        <h2>表頭</h2>
+        <div class="fields wide">
+          <label class="f span2">工程名稱<input id="m-project" data-meta="project"></label>
+          <label class="f">日期<input id="m-date" type="date" data-meta="date"></label>
+          <label class="f">天氣<input id="m-weather" list="wx" data-meta="weather"></label>
+          <label class="f">開始時間<input id="m-tStart" type="time" data-meta="tStart"></label>
+          <label class="f">結束時間<input id="m-tEnd" type="time" data-meta="tEnd"></label>
+          <div class="full inst-row">
+            <label class="f">使用儀器<select id="m-inst" data-inst="1"></select></label>
+            <button data-act="toggleInst" id="inst-toggle">＋ 新增儀器</button>
+            <button class="ghost" data-act="delInst" id="inst-del">刪除</button>
+          </div>
+          <div class="full inst-form" id="inst-form" hidden>
+            <label class="f">儀器名稱／型號<input id="ni-name" placeholder="例：全測站經緯儀 Nikon XS"></label>
+            <label class="f">儀器序號<input id="ni-serial" class="num"></label>
+            <div class="row"><button class="primary" data-act="addInst">加入</button><button data-act="toggleInst">取消</button><span id="inst-msg" class="warn"></span></div>
+          </div>
+          <label class="f">溫度／氣壓<input id="m-atm" data-meta="atm"></label>
+          <label class="f">觀測者<input id="m-observer" data-meta="observer"></label>
+          <label class="f">記簿者<input id="m-recorder" data-meta="recorder"></label>
+        </div>
+        <datalist id="wx"><option value="晴"><option value="晴時多雲"><option value="多雲"><option value="陰"><option value="陰有短暫雨"></datalist>
+        <datalist id="ctrl-list"></datalist>
+      </section>
+
+      <section class="panel">
+        <h2>模擬參數</h2>
+        <div class="fields">
+          <label class="f">單鏡角度偏差上限（″）<input id="c-angMax" class="num" type="number" min="0" max="60" step="1" data-cfg="angMax"></label>
+          <label class="f">單次測距偏差上限（m）<input id="c-distMax" class="num" type="number" min="0" max="0.02" step="0.001" data-cfg="distMax"></label>
+          <label class="f">已知點角度誤差上限（″）<input id="c-kAng" class="num" type="number" min="0" max="60" step="1" data-cfg="kAng"></label>
+          <label class="f">已知點距離誤差上限（m）<input id="c-kDist" class="num" type="number" min="0" max="0.05" step="0.001" data-cfg="kDist"></label>
+          <label class="f">已知點檢核容許值（m）<input id="c-kTol" class="num" type="number" min="0" step="0.001" data-cfg="kTol"></label>
+          <label class="f">誤差分布
+            <select id="c-dist" data-cfg="dist"><option value="normal">常態（截尾）</option><option value="uniform">均勻</option></select></label>
+          <label class="f span2">已知點最後一欄記錄
+            <select id="c-errMode" data-cfg="errMode"><option value="dist">距離較差 ΔD</option><option value="pos">點位誤差（含角度橫向，帶 ΔD 符號）</option></select></label>
+          <label class="f">亂數種子<input id="c-seed" class="num" type="number" step="1" data-cfg="seed"></label>
+        </div>
+        <div class="row"><button class="primary" data-act="reseed">重新產生亂數</button><span class="hint">種子相同就會得到相同的數據。</span></div>
+      </section>
+
+      <section class="panel">
+        <h2>測站與觀測點</h2>
+        <p class="hint">角度可輸入 <code>47.1836</code>（度.分秒）、<code>47 18 36</code> 或 <code>47°18'36"</code>，取至 1″。每站需有一個後視點與一個檢核點（第三控制點）。點號 <code>Q</code> 開頭自動設為補點，全數字自動設為放樣點。補點視為暫時性控制點，之後可當測站、後視或檢核使用。</p>
+        <div id="stations" class="col"></div>
+        <div class="row"><button data-act="addStation">＋ 新增測站</button></div>
+      </section>
+
+      <section class="panel">
+        <h2>資料存取</h2>
+        <p class="hint">輸入內容會自動存在這個瀏覽器裡。要換電腦時，複製下方 JSON 帶走，再貼回來匯入。</p>
+        <details>
+          <summary>匯出／匯入 JSON</summary>
+          <div class="col" style="margin-top:8px">
+            <textarea id="json-box" spellcheck="false"></textarea>
+            <div class="row">
+              <button data-act="copyJson">複製目前資料</button>
+              <button data-act="importJson">匯入上方 JSON</button>
+              <button data-act="loadSample">載入範例</button>
+              <span id="json-msg" class="toast"></span>
+            </div>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <div class="col">
+      <div class="row no-print"><button class="primary" data-act="print">列印手簿</button><button data-act="copyTsv">複製手簿（貼到 Excel）</button><span id="tsv-msg" class="toast"></span></div>
+      <textarea id="tsv-fallback" hidden readonly></textarea>
+      <article class="book" id="book"></article>
+      <div class="print-foot" id="print-foot"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const STORE='lineBook.v2';
+const DEFAULT_INST={name:'全測站經緯儀 Nikon XS',serial:'E131502'};
+const SAMPLE={
+  meta:{project:'範例工程｜放樣作業',date:'2026-10-21',weather:'晴時多雲',tStart:'09:10',tEnd:'11:40',atm:'26°C／1012 hPa',observer:'',recorder:''},
+  instruments:[clone(DEFAULT_INST)],inst:0,
+  cfg:{angMax:15,distMax:0.008,kAng:6,kDist:0.012,kTol:0.030,dist:'normal',errMode:'dist',seed:20261021},
+  stations:[
+    {name:'K01',hi:'1.520',points:[
+      {name:'K02',role:'bs',known:true,ha:'0.0000',za:'90.1220',d:'152.384',ht:'1.500'},
+      {name:'K03',role:'ck',known:true,ha:'47.1836',za:'89.4705',d:'208.917',ht:'1.500'},
+      {name:'101',role:'so',known:false,ha:'12.0544',za:'90.3110',d:'35.212',ht:'1.300'},
+      {name:'102',role:'so',known:false,ha:'63.4018',za:'91.0255',d:'48.906',ht:'1.300'},
+      {name:'Q01',role:'aux',known:false,ha:'105.2207',za:'89.5530',d:'87.531',ht:'1.500'}]},
+    {name:'K02',hi:'1.495',points:[
+      {name:'K01',role:'bs',known:true,ha:'0.0000',za:'89.4740',d:'152.384',ht:'1.500'},
+      {name:'K03',role:'ck',known:true,ha:'301.5214',za:'90.0820',d:'176.045',ht:'1.500'},
+      {name:'103',role:'so',known:false,ha:'330.1526',za:'90.2005',d:'41.770',ht:'1.300'},
+      {name:'104',role:'so',known:false,ha:'352.4853',za:'89.4012',d:'62.118',ht:'1.300'}]},
+    {name:'Q01',hi:'1.510',points:[
+      {name:'K01',role:'bs',known:true,ha:'0.0000',za:'90.0430',d:'87.531',ht:'1.500'},
+      {name:'K02',role:'ck',known:true,ha:'58.2716',za:'89.5822',d:'121.664',ht:'1.500'},
+      {name:'105',role:'so',known:false,ha:'144.3009',za:'90.1418',d:'22.847',ht:'1.300'},
+      {name:'106',role:'so',known:false,ha:'201.1752',za:'89.4936',d:'31.402',ht:'1.300'}]}
+  ]};
+const ROLE={bs:'後視',ck:'檢核',so:'放樣',aux:'補點'};
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function autoRole(name,role){
+  if(role==='bs'||role==='ck')return role;
+  const n=String(name||'').trim();
+  if(/^q/i.test(n))return 'aux';
+  if(/^\d+$/.test(n))return 'so';
+  return role||'so';
+}
+function fixup(o){
+  o.cfg=Object.assign({},SAMPLE.cfg,o.cfg||{});o.meta=Object.assign({},SAMPLE.meta,o.meta||{});
+  if(!Array.isArray(o.instruments)||!o.instruments.length)o.instruments=[clone(DEFAULT_INST)];
+  if(!(o.inst>=0&&o.inst<o.instruments.length))o.inst=0;
+  o.stations.forEach(st=>st.points.forEach(p=>{if(p.role==='det')p.role='so';if(!ROLE[p.role])p.role='so'}));
+  return o;
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(STORE))}catch(e){S=null}
+S=fixup(S&&S.stations?S:clone(SAMPLE));
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}}
+
+/* ---------- 角度 ---------- */
+const FULL=1296000,HALF=648000;
+const norm=s=>((s%FULL)+FULL)%FULL;
+function parseAng(str){
+  if(str==null)return null;let s=String(str).trim();if(!s)return null;
+  let d,m,x;
+  if(/[°'"′″\s-]/.test(s.replace(/^-/,''))){
+    const p=s.replace(/[°'"′″]/g,' ').replace(/-/g,' ').trim().split(/\s+/).map(Number);
+    if(p.some(isNaN))return NaN;[d,m=0,x=0]=p;
+  }else{
+    if(!/^\d+(\.\d*)?$/.test(s))return NaN;
+    const [ip,fp='']=s.split('.');const f=(fp+'0000');
+    d=+ip;m=+f.slice(0,2);x=+(f.slice(2,4)+'.'+(f.slice(4)||'0'));
+  }
+  if(m>=60||x>=60||d<0)return NaN;
+  return Math.round(d*3600+m*60+x);
+}
+function fmtAng(sec){sec=norm(Math.round(sec));const d=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;
+  return d+'°'+String(m).padStart(2,'0')+"'"+String(x).padStart(2,'0')+'"';}
+const sgn=(v,dp)=>(v>=0?'+':'-')+Math.abs(v).toFixed(dp);
+const sgnI=v=>(v>0?'+':v<0?'-':'±')+Math.abs(v);
+
+/* ---------- 亂數 ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function rngFor(seed,si,pi){let h=(Number(seed)|0)^Math.imul(si+1,0x9E3779B1)^Math.imul(pi+7,0x85EBCA77);h=Math.imul(h^h>>>16,0x45d9f3b);return mulberry32(h>>>0)}
+function draw(r,max){
+  if(!(max>0))return 0;
+  if(S.cfg.dist==='uniform')return (r()*2-1)*max;
+  for(let k=0;k<60;k++){const u=1-r(),v=r();const z=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*max/2;if(Math.abs(z)<=max)return z}
+  return 0;
+}
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+/* ---------- 模擬單點 ---------- */
+function simulate(si,pi,p){
+  const T=parseAng(p.ha),Z=parseAng(p.za),Dm=parseFloat(p.d);
+  const bad={ha:T==null||isNaN(T),za:Z!=null&&isNaN(Z),d:!(Dm>0)};
+  if(bad.ha||bad.za||bad.d)return {bad};
+  const c=S.cfg,r=rngFor(c.seed,si,pi);
+  const angMax=clamp(+c.angMax||0,0,60),distMax=clamp(Math.round((+c.distMax||0)*1000),0,20);
+  const D=Math.round(Dm*1000);
+  let b=0,bd=0;
+  if(p.known){b=Math.round(draw(r,clamp(+c.kAng||0,0,60)));bd=Math.round(draw(r,Math.round((+c.kDist||0)*1000)));}
+  const Tm=T+b,Dmean=D+bd;
+  const e=Math.round(draw(r,angMax));
+  const haL=norm(Tm+e),haR=norm(Tm+HALF-e);
+  let zaL=null,zaR=null,idx=null;
+  if(Z!=null){idx=Math.round(draw(r,angMax));zaL=norm(Z+idx);zaR=norm(FULL-Z+idx);}
+  const ed=Math.round(draw(r,distMax));
+  const d1=Dmean+ed,d2=Dmean-ed;
+  const res={haL,haR,zaL,zaR,d1:d1/1000,d2:d2/1000,c2:2*e,idx,haM:norm(Tm),zaM:Z,dM:Dmean/1000,known:!!p.known};
+  if(p.known){
+    const dD=bd/1000,lat=Dm*b/206264.806;
+    res.dD=dD;res.dA=b;
+    res.err=c.errMode==='pos'?(dD<0?-1:1)*Math.sqrt(dD*dD+lat*lat):dD;
+    res.over=Math.abs(res.err)>(+c.kTol||Infinity);
+  }
+  return res;
+}
+
+/* ---------- 補點管理 ---------- */
+function auxRegistry(){
+  const reg=new Map();
+  S.stations.forEach((st,si)=>{
+    const bs=st.points.find(p=>p.role==='bs');
+    st.points.forEach(p=>{
+      if(p.role!=='aux'||!p.name)return;
+      const k=p.name.trim().toUpperCase();
+      if(!reg.has(k))reg.set(k,{name:p.name.trim(),si,station:st.name,bs:bs?bs.name:'',p,uses:[]});
+    });
+  });
+  S.stations.forEach((st,si)=>{
+    const add=(name,what)=>{const k=String(name||'').trim().toUpperCase();if(!/^Q/.test(k))return;
+      if(!reg.has(k))reg.set(k,{name:String(name).trim(),si:-1,station:'',bs:'',p:null,uses:[]});
+      reg.get(k).uses.push({si,station:st.name,what});};
+    add(st.name,'測站');
+    st.points.forEach(p=>{if(p.role==='bs')add(p.name,'後視');if(p.role==='ck')add(p.name,'檢核')});
+  });
+  return reg;
+}
+function ctrlNames(){
+  const set=new Set();
+  S.stations.forEach(st=>{if(st.name)set.add(st.name.trim());st.points.forEach(p=>{if(p.name&&p.role!=='so')set.add(p.name.trim())})});
+  return [...set].filter(Boolean).sort();
+}
+
+/* ---------- 編輯器 ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+function renderInst(){
+  const sel=document.getElementById('m-inst');
+  sel.innerHTML=S.instruments.map((it,i)=>`<option value="${i}"${i===S.inst?' selected':''}>${esc(it.name)}${it.serial?'（'+esc(it.serial)+'）':''}</option>`).join('');
+  document.getElementById('inst-del').hidden=S.instruments.length<2;
+}
+function renderCtrlList(){document.getElementById('ctrl-list').innerHTML=ctrlNames().map(n=>`<option value="${esc(n)}">`).join('')}
+function renderEditor(){
+  document.querySelectorAll('[data-meta]').forEach(el=>{el.value=S.meta[el.dataset.meta]||''});
+  document.querySelectorAll('[data-cfg]').forEach(el=>{el.value=S.cfg[el.dataset.cfg]});
+  renderInst();renderCtrlList();
+  const box=document.getElementById('stations');
+  box.innerHTML=S.stations.map((st,si)=>{
+    const rows=st.points.map((p,pi)=>`<tr>
+      <td class="c-name"><input id="s${si}-p${pi}-name" data-si="${si}" data-pi="${pi}" data-f="name" value="${esc(p.name)}"${p.role==='bs'||p.role==='ck'?' list="ctrl-list"':''}></td>
+      <td class="c-role"><select id="s${si}-p${pi}-role" data-si="${si}" data-pi="${pi}" data-f="role">${Object.entries(ROLE).map(([k,v])=>`<option value="${k}"${p.role===k?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="c-known"><input type="checkbox" id="s${si}-p${pi}-known" data-si="${si}" data-pi="${pi}" data-f="known"${p.known?' checked':''} aria-label="已知點"></td>
+      <td class="c-ha"><input class="num" id="s${si}-p${pi}-ha" data-si="${si}" data-pi="${pi}" data-f="ha" value="${esc(p.ha)}" placeholder="dd.mmss"></td>
+      <td class="c-za"><input class="num" id="s${si}-p${pi}-za" data-si="${si}" data-pi="${pi}" data-f="za" value="${esc(p.za)}" placeholder="選填"></td>
+      <td class="c-d"><input class="num" id="s${si}-p${pi}-d" data-si="${si}" data-pi="${pi}" data-f="d" value="${esc(p.d)}" inputmode="decimal"></td>
+      <td class="c-ht"><input class="num" id="s${si}-p${pi}-ht" data-si="${si}" data-pi="${pi}" data-f="ht" value="${esc(p.ht)}" inputmode="decimal"></td>
+      <td class="c-x"><button class="ghost" data-act="delPoint" data-si="${si}" data-pi="${pi}" aria-label="刪除 ${esc(p.name)}">✕</button></td></tr>`).join('');
+    const nb=st.points.filter(p=>p.role==='bs').length,nc=st.points.filter(p=>p.role==='ck').length;
+    const w=[];if(nb!==1)w.push('需要剛好一個後視點');if(nc<1)w.push('缺少檢核點');
+    const isAux=/^q/i.test(String(st.name||'').trim());
+    return `<div class="station">
+      <div class="st-head"><span class="lbl">測站 ${si+1}${isAux?' <span class="role aux">補點設站</span>':''}</span>
+        <label class="f">站名<input id="s${si}-name" data-si="${si}" data-f="name" value="${esc(st.name)}" list="ctrl-list"></label>
+        <label class="f">儀器高（m）<input class="num" id="s${si}-hi" data-si="${si}" data-f="hi" value="${esc(st.hi)}" inputmode="decimal"></label>
+        <span class="sp"></span><button class="ghost" data-act="delStation" data-si="${si}">刪除測站</button></div>
+      <div class="scroll"><table class="pts"><thead><tr><th>點號</th><th>類別</th><th>已知</th><th>水平角</th><th>天頂角</th><th>距離（m）</th><th>稜鏡高</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="st-foot"><button data-act="addPoint" data-si="${si}" data-role="so">＋ 放樣點</button><button data-act="addPoint" data-si="${si}" data-role="aux">＋ 補點</button>${w.length?`<span class="warn">${w.join('，')}</span>`:''}</div></div>`;
+  }).join('');
+}
+
+/* ---------- 手簿 ---------- */
+let lastTSV='';
+const FOOT='本手簿之正倒鏡讀數與測距為程式依輸入值模擬產生，非實測紀錄。';
+function renderBook(){
+  const m=S.meta,c=S.cfg,inst=S.instruments[S.inst]||DEFAULT_INST;
+  const metaItems=[['工程名稱',m.project],['日期',m.date],['天氣',m.weather],['時間',(m.tStart||'')+(m.tEnd?' – '+m.tEnd:'')],['使用儀器',inst.name],['儀器序號',inst.serial],['溫度／氣壓',m.atm],['觀測者',m.observer],['記簿者',m.recorder]];
+  const tsv=[['外業光線法手簿'],...metaItems.map(([k,v])=>[k,v||'']),[]];
+  let html=`<div class="book-title"><h3>外業光線法手簿</h3></div>
+    <div class="meta">${metaItems.map(([k,v])=>`<div><b>${k}</b><span>${esc(v||'—')}</span></div>`).join('')}</div>`;
+  const sums=[],sim={};
+  const head=['點號','類別','鏡位','水平角讀數','天頂角讀數','距離','2C（″）','指標差（″）','平均水平角','平均天頂角','平均距離（m）','稜鏡高（m）','較正確值差（m）'];
+  S.stations.forEach((st,si)=>{
+    let rows='',max2c=0,maxdd=0;const kn=[];
+    tsv.push(['測站',st.name,'儀器高',st.hi]);tsv.push(head);
+    st.points.forEach((p,pi)=>{
+      const r=simulate(si,pi,p);sim[si+'-'+pi]=r;
+      ['ha','za','d'].forEach(f=>{const el=document.getElementById(`s${si}-p${pi}-${f}`);if(el)el.classList.toggle('bad',!!(r.bad&&r.bad[f]))});
+      if(r.bad){rows+=`<tr class="r"><td>${esc(p.name)}</td><td colspan="12" class="warn">輸入格式有誤，請檢查左側紅框欄位</td></tr>`;return}
+      max2c=Math.max(max2c,Math.abs(r.c2));maxdd=Math.max(maxdd,Math.abs(r.d1-r.d2));
+      const za=v=>v==null?'—':fmtAng(v);
+      let errTxt='—',errCls='';
+      if(r.known){errTxt=sgn(r.err,3);errCls=r.over?'err over':'err okc';kn.push([p.name,r]);}
+      const roleH=`<span class="role ${p.role}">${ROLE[p.role]}${r.known?'・已知':''}</span>`;
+      rows+=`<tr><td rowspan="2"><b>${esc(p.name)}</b></td><td rowspan="2">${roleH}</td><td>正</td>
+        <td class="m">${fmtAng(r.haL)}</td><td class="m">${za(r.zaL)}</td><td class="m">${r.d1.toFixed(3)}</td>
+        <td rowspan="2" class="m">${sgnI(r.c2)}</td><td rowspan="2" class="m">${r.idx==null?'—':sgnI(r.idx)}</td>
+        <td rowspan="2" class="m">${fmtAng(r.haM)}</td><td rowspan="2" class="m">${za(r.zaM)}</td>
+        <td rowspan="2" class="m">${r.dM.toFixed(3)}</td><td rowspan="2" class="m">${esc(p.ht||'')}</td>
+        <td rowspan="2" class="m ${errCls}">${errTxt}</td></tr>
+        <tr class="r"><td>倒</td><td class="m">${fmtAng(r.haR)}</td><td class="m">${za(r.zaR)}</td><td class="m">${r.d2.toFixed(3)}</td></tr>`;
+      tsv.push([p.name,ROLE[p.role]+(r.known?'(已知)':''),'正',fmtAng(r.haL),za(r.zaL),r.d1.toFixed(3),sgnI(r.c2),r.idx==null?'':sgnI(r.idx),fmtAng(r.haM),za(r.zaM),r.dM.toFixed(3),p.ht||'',r.known?errTxt:'']);
+      tsv.push(['','','倒',fmtAng(r.haR),za(r.zaR),r.d2.toFixed(3),'','','','','','','']);
+    });
+    tsv.push([]);
+    html+=`<div class="scroll"><table class="bk"><caption>測站 ${esc(st.name)}<small>儀器高 ${esc(st.hi)} m</small></caption>
+      <thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    sums.push(`<div class="sum"><strong>測站 ${esc(st.name)}</strong>
+      <span>最大 |2C|：<span class="m">${max2c}″</span>　最大測距較差：<span class="m">${maxdd.toFixed(3)} m</span></span>
+      ${kn.map(([n,r])=>`<span>${esc(n)}：<span class="m">${sgn(r.err,3)} m</span>（Δ角 <span class="m">${sgnI(r.dA)}″</span>） <span class="pill ${r.over?'bad':'ok'}">${r.over?'超限':'合格'}</span></span>`).join('')}</div>`);
+  });
+
+  /* 補點（暫時性控制點）清單 */
+  const reg=[...auxRegistry().values()];
+  if(reg.length){
+    const ah=['補點','測設測站','後視','平均水平角','平均天頂角','平均距離（m）','稜鏡高（m）','後續使用','狀態'];
+    tsv.push(['補點（暫時性控制點）清單']);tsv.push(ah);
+    const arows=reg.map(a=>{
+      const r=a.si>=0?sim[a.si+'-'+S.stations[a.si].points.indexOf(a.p)]:null;
+      const ok=r&&!r.bad;
+      const early=a.uses.filter(u=>a.si<0||u.si<=a.si);
+      const status=a.si<0?'尚未測設':early.length?'使用早於測設':'正常';
+      const cls=status==='正常'?'ok':'bad';
+      const uses=a.uses.length?a.uses.map(u=>`${u.station}站${u.what}`).join('、'):'—';
+      tsv.push([a.name,a.station||'',a.bs||'',ok?fmtAng(r.haM):'',ok&&r.zaM!=null?fmtAng(r.zaM):'',ok?r.dM.toFixed(3):'',a.p?a.p.ht||'':'',uses,status]);
+      return `<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.station||'—')}</td><td>${esc(a.bs||'—')}</td>
+        <td class="m">${ok?fmtAng(r.haM):'—'}</td><td class="m">${ok&&r.zaM!=null?fmtAng(r.zaM):'—'}</td><td class="m">${ok?r.dM.toFixed(3):'—'}</td>
+        <td class="m">${a.p?esc(a.p.ht||''):'—'}</td><td class="left">${esc(uses)}</td><td><span class="pill ${cls}">${status}</span></td></tr>`;
+    }).join('');
+    tsv.push([]);
+    html+=`<div class="scroll"><table class="bk narrow"><caption>補點（暫時性控制點）清單<small>依測站順序判斷，補點須先測設才能設站或當後視</small></caption>
+      <thead><tr>${ah.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${arows}</tbody></table></div>`;
+  }
+
+  html+=`<div class="sumgrid">${sums.join('')}</div>
+    <p class="foot">${FOOT}（種子 ${esc(c.seed)}；單鏡角度 ≤ ${esc(c.angMax)}″、單次測距 ≤ ${(+c.distMax).toFixed(3)} m）</p>`;
+  tsv.push([FOOT]);
+  document.getElementById('book').innerHTML=html;
+  document.getElementById('print-foot').textContent=FOOT;
+  lastTSV=tsv.map(r=>r.join('\t')).join('\n');
+  document.getElementById('json-box').value=JSON.stringify(S,null,1);
+}
+
+/* ---------- 事件 ---------- */
+const ed=document.getElementById('editor');
+function onField(el,structural){
+  if(el.dataset.meta){S.meta[el.dataset.meta]=el.value}
+  else if(el.dataset.inst){S.inst=+el.value}
+  else if(el.dataset.cfg){const k=el.dataset.cfg;S.cfg[k]=el.tagName==='SELECT'?el.value:(el.value===''?0:+el.value)}
+  else if(el.dataset.si!=null){
+    const st=S.stations[+el.dataset.si];
+    if(el.dataset.pi==null){st[el.dataset.f]=el.value}
+    else{const p=st.points[+el.dataset.pi],f=el.dataset.f;
+      if(f==='known')p.known=el.checked;
+      else{p[f]=el.value;
+        if(f==='role'){p.known=el.value==='bs'||el.value==='ck';structural=true}
+        if(f==='name'){const nr=autoRole(p.name,p.role);if(nr!==p.role){p.role=nr;p.known=false;
+          const sel=document.getElementById(el.id.replace(/-name$/,'-role'));if(sel)sel.value=nr;}}}}
+  }else return;
+  save();if(structural)renderEditor();else renderCtrlList();renderBook();
+}
+ed.addEventListener('input',e=>{if(e.target.matches('input:not([type=checkbox]):not([id^=ni-]),textarea:not(#json-box)'))onField(e.target,false)});
+ed.addEventListener('change',e=>{if(e.target.matches('select,input[type=checkbox]'))onField(e.target,false)});
+function flash(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.color='';setTimeout(()=>{if(el.textContent===msg)el.textContent=''},2600)}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,si=+b.dataset.si,pi=+b.dataset.pi;
+  if(a==='toggleInst'){const f=document.getElementById('inst-form');f.hidden=!f.hidden;if(!f.hidden)document.getElementById('ni-name').focus();return}
+  else if(a==='addInst'){
+    const n=document.getElementById('ni-name').value.trim(),s=document.getElementById('ni-serial').value.trim();
+    if(!n){document.getElementById('inst-msg').textContent='請輸入儀器名稱';return}
+    S.instruments.push({name:n,serial:s});S.inst=S.instruments.length-1;
+    document.getElementById('ni-name').value='';document.getElementById('ni-serial').value='';document.getElementById('inst-msg').textContent='';
+    document.getElementById('inst-form').hidden=true}
+  else if(a==='delInst'){if(S.instruments.length<2)return;S.instruments.splice(S.inst,1);S.inst=0}
+  else if(a==='reseed'){S.cfg.seed=Math.floor(Math.random()*1e8)}
+  else if(a==='addStation'){S.stations.push({name:'',hi:'1.500',points:[
+      {name:'',role:'bs',known:true,ha:'0.0000',za:'',d:'',ht:'1.500'},{name:'',role:'ck',known:true,ha:'',za:'',d:'',ht:'1.500'}]})}
+  else if(a==='delStation'){S.stations.splice(si,1)}
+  else if(a==='addPoint'){
+    const role=b.dataset.role,all=S.stations.flatMap(s=>s.points);
+    let name;
+    if(role==='aux'){const n=Math.max(0,...all.map(p=>/^Q(\d+)$/i.exec(p.name||'')).filter(Boolean).map(x=>+x[1]))+1;name='Q'+String(n).padStart(2,'0')}
+    else{const n=Math.max(100,...all.filter(p=>/^\d+$/.test(p.name||'')).map(p=>+p.name))+1;name=String(n)}
+    S.stations[si].points.push({name,role,known:false,ha:'',za:'',d:'',ht:role==='aux'?'1.500':'1.300'})}
+  else if(a==='delPoint'){S.stations[si].points.splice(pi,1)}
+  else if(a==='loadSample'){S=fixup(clone(SAMPLE));flash('json-msg','已載入範例')}
+  else if(a==='copyJson'){copy(JSON.stringify(S),'json-box','json-msg');return}
+  else if(a==='importJson'){try{const o=JSON.parse(document.getElementById('json-box').value);if(!o.stations)throw 0;
+      S=fixup(o);flash('json-msg','已匯入')}
+      catch(err){const el=document.getElementById('json-msg');el.textContent='JSON 格式不正確，請確認內容完整（需含 stations）';el.style.color='var(--bad)';return}}
+  else if(a==='print'){window.print();return}
+  else if(a==='copyTsv'){copy(lastTSV,'tsv-fallback','tsv-msg');return}
+  else return;
+  save();renderEditor();renderBook();
+});
+function copy(text,boxId,msgId){
+  const fallback=()=>{const t=document.getElementById(boxId);t.hidden=false;t.value=text;t.focus();t.select();flash(msgId,'已選取文字，請按 Ctrl+C／⌘C 複製')};
+  try{navigator.clipboard.writeText(text).then(()=>flash(msgId,'已複製，可直接貼到 Excel'),fallback)}catch(err){fallback()}
+}
+renderEditor();renderBook();
+})();
+</script>
+
+</body>
+</html>
