@@ -132,7 +132,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 <div class="wrap">
   <header class="top">
     <h1>光線法手簿教學模擬器</h1>
-    <p class="sub">輸入每個點的正確水平角、天頂角與距離，工具會產生正倒鏡讀數與兩次測距。放樣點、補點的平均值等於輸入值；已知點會加入一個小偏差，並在最後一欄記下較正確值的差。</p>
+    <p class="sub">只要輸入每個點的正確水平角與距離，工具會產生正倒鏡讀數與兩次測距。放樣點、補點的平均值等於輸入值；已知點會加入一個小偏差，並在最後一欄記下較正確值的差。</p>
   </header>
 
   <div class="grid">
@@ -182,7 +182,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 
       <section class="panel">
         <h2>測站與觀測點</h2>
-        <p class="hint">角度可輸入 <code>47.1836</code>（度.分秒）、<code>47 18 36</code> 或 <code>47°18'36"</code>，取至 1″。每站需有一個後視點與一個檢核點（第三控制點）。點號 <code>Q</code> 開頭自動設為補點，全數字自動設為放樣點。補點視為暫時性控制點，之後可當測站、後視或檢核使用。</p>
+        <p class="hint">角度可輸入 <code>47.1836</code>（度.分秒）、<code>47 18 36</code> 或 <code>47°18'36"</code>，取至 1″。只需輸入水平角與距離；天頂角、儀器高、稜鏡高留空時會在合理範圍內自動產生，也可自行填入。每站需有一個後視點與一個檢核點（第三控制點）。點號 <code>Q</code> 開頭自動設為補點，全數字自動設為放樣點。補點視為暫時性控制點，之後可當測站、後視或檢核使用。</p>
         <div id="stations" class="col"></div>
         <div class="row"><button data-act="addStation">＋ 新增測站</button></div>
       </section>
@@ -223,22 +223,22 @@ const SAMPLE={
   instruments:[clone(DEFAULT_INST)],inst:0,
   cfg:{angMax:15,distMax:0.008,kAng:6,kDist:0.012,kTol:0.030,dist:'normal',errMode:'dist',seed:20261021},
   stations:[
-    {name:'K01',hi:'1.520',points:[
-      {name:'K02',role:'bs',known:true,ha:'0.0000',za:'90.1220',d:'152.384',ht:'1.500'},
-      {name:'K03',role:'ck',known:true,ha:'47.1836',za:'89.4705',d:'208.917',ht:'1.500'},
-      {name:'101',role:'so',known:false,ha:'12.0544',za:'90.3110',d:'35.212',ht:'1.300'},
-      {name:'102',role:'so',known:false,ha:'63.4018',za:'91.0255',d:'48.906',ht:'1.300'},
-      {name:'Q01',role:'aux',known:false,ha:'105.2207',za:'89.5530',d:'87.531',ht:'1.500'}]},
-    {name:'K02',hi:'1.495',points:[
-      {name:'K01',role:'bs',known:true,ha:'0.0000',za:'89.4740',d:'152.384',ht:'1.500'},
-      {name:'K03',role:'ck',known:true,ha:'301.5214',za:'90.0820',d:'176.045',ht:'1.500'},
-      {name:'103',role:'so',known:false,ha:'330.1526',za:'90.2005',d:'41.770',ht:'1.300'},
-      {name:'104',role:'so',known:false,ha:'352.4853',za:'89.4012',d:'62.118',ht:'1.300'}]},
-    {name:'Q01',hi:'1.510',points:[
-      {name:'K01',role:'bs',known:true,ha:'0.0000',za:'90.0430',d:'87.531',ht:'1.500'},
-      {name:'K02',role:'ck',known:true,ha:'58.2716',za:'89.5822',d:'121.664',ht:'1.500'},
-      {name:'105',role:'so',known:false,ha:'144.3009',za:'90.1418',d:'22.847',ht:'1.300'},
-      {name:'106',role:'so',known:false,ha:'201.1752',za:'89.4936',d:'31.402',ht:'1.300'}]}
+    {name:'K01',hi:'',points:[
+      {name:'K02',role:'bs',known:true,ha:'0.0000',za:'',d:'152.384',ht:''},
+      {name:'K03',role:'ck',known:true,ha:'47.1836',za:'',d:'208.917',ht:''},
+      {name:'101',role:'so',known:false,ha:'12.0544',za:'',d:'35.212',ht:''},
+      {name:'102',role:'so',known:false,ha:'63.4018',za:'',d:'48.906',ht:''},
+      {name:'Q01',role:'aux',known:false,ha:'105.2207',za:'',d:'87.531',ht:''}]},
+    {name:'K02',hi:'',points:[
+      {name:'K01',role:'bs',known:true,ha:'0.0000',za:'',d:'152.384',ht:''},
+      {name:'K03',role:'ck',known:true,ha:'301.5214',za:'',d:'176.045',ht:''},
+      {name:'103',role:'so',known:false,ha:'330.1526',za:'',d:'41.770',ht:''},
+      {name:'104',role:'so',known:false,ha:'352.4853',za:'',d:'62.118',ht:''}]},
+    {name:'Q01',hi:'',points:[
+      {name:'K01',role:'bs',known:true,ha:'0.0000',za:'',d:'87.531',ht:''},
+      {name:'K02',role:'ck',known:true,ha:'58.2716',za:'',d:'121.664',ht:''},
+      {name:'105',role:'so',known:false,ha:'144.3009',za:'',d:'22.847',ht:''},
+      {name:'106',role:'so',known:false,ha:'201.1752',za:'',d:'31.402',ht:''}]}
   ]};
 const ROLE={bs:'後視',ck:'檢核',so:'放樣',aux:'補點'};
 function clone(o){return JSON.parse(JSON.stringify(o))}
@@ -293,12 +293,21 @@ function draw(r,max){
   return 0;
 }
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const POLE=['1.300','1.500','1.600','1.800','2.000'];
+function autoHt(g,role){return role==='so'?POLE[Math.floor(g()*POLE.length)]:((1400+Math.floor(g()*201))/1000).toFixed(3)}
+function stHi(si){const v=String(S.stations[si].hi||'').trim();if(v)return v;
+  const g=rngFor((Number(S.cfg.seed)|0)^0x27d4eb2f,si,999);return ((1350+Math.floor(g()*301))/1000).toFixed(3)}
 
 /* ---------- 模擬單點 ---------- */
 function simulate(si,pi,p){
-  const T=parseAng(p.ha),Z=parseAng(p.za),Dm=parseFloat(p.d);
+  const T=parseAng(p.ha),Dm=parseFloat(p.d);
+  let Z=parseAng(p.za);
   const bad={ha:T==null||isNaN(T),za:Z!=null&&isNaN(Z),d:!(Dm>0)};
   if(bad.ha||bad.za||bad.d)return {bad};
+  /* 未輸入的天頂角、稜鏡高在合理範圍內自動產生 */
+  const g=rngFor((Number(S.cfg.seed)|0)^0x5bd1e995,si,pi);
+  if(Z==null){const lim=Math.min(2.5,0.3+0.03*Dm),dh=(g()*2-1)*lim;Z=Math.round(HALF/2-Math.atan2(dh,Dm)*206264.806)}
+  const ht=String(p.ht||'').trim()||autoHt(g,p.role);
   const c=S.cfg,r=rngFor(c.seed,si,pi);
   const angMax=clamp(+c.angMax||0,0,60),distMax=clamp(Math.round((+c.distMax||0)*1000),0,20);
   const D=Math.round(Dm*1000);
@@ -311,7 +320,7 @@ function simulate(si,pi,p){
   if(Z!=null){idx=Math.round(draw(r,angMax));zaL=norm(Z+idx);zaR=norm(FULL-Z+idx);}
   const ed=Math.round(draw(r,distMax));
   const d1=Dmean+ed,d2=Dmean-ed;
-  const res={haL,haR,zaL,zaR,d1:d1/1000,d2:d2/1000,c2:2*e,idx,haM:norm(Tm),zaM:Z,dM:Dmean/1000,known:!!p.known};
+  const res={ht,haL,haR,zaL,zaR,d1:d1/1000,d2:d2/1000,c2:2*e,idx,haM:norm(Tm),zaM:Z,dM:Dmean/1000,known:!!p.known};
   if(p.known){
     const dD=bd/1000,lat=Dm*b/206264.806;
     res.dD=dD;res.dA=b;
@@ -366,9 +375,9 @@ function renderEditor(){
       <td class="c-role"><select id="s${si}-p${pi}-role" data-si="${si}" data-pi="${pi}" data-f="role">${Object.entries(ROLE).map(([k,v])=>`<option value="${k}"${p.role===k?' selected':''}>${v}</option>`).join('')}</select></td>
       <td class="c-known"><input type="checkbox" id="s${si}-p${pi}-known" data-si="${si}" data-pi="${pi}" data-f="known"${p.known?' checked':''} aria-label="已知點"></td>
       <td class="c-ha"><input class="num" id="s${si}-p${pi}-ha" data-si="${si}" data-pi="${pi}" data-f="ha" value="${esc(p.ha)}" placeholder="dd.mmss"></td>
-      <td class="c-za"><input class="num" id="s${si}-p${pi}-za" data-si="${si}" data-pi="${pi}" data-f="za" value="${esc(p.za)}" placeholder="選填"></td>
+      <td class="c-za"><input class="num" id="s${si}-p${pi}-za" data-si="${si}" data-pi="${pi}" data-f="za" value="${esc(p.za)}" placeholder="自動"></td>
       <td class="c-d"><input class="num" id="s${si}-p${pi}-d" data-si="${si}" data-pi="${pi}" data-f="d" value="${esc(p.d)}" inputmode="decimal"></td>
-      <td class="c-ht"><input class="num" id="s${si}-p${pi}-ht" data-si="${si}" data-pi="${pi}" data-f="ht" value="${esc(p.ht)}" inputmode="decimal"></td>
+      <td class="c-ht"><input class="num" id="s${si}-p${pi}-ht" data-si="${si}" data-pi="${pi}" data-f="ht" value="${esc(p.ht)}" placeholder="自動" inputmode="decimal"></td>
       <td class="c-x"><button class="ghost" data-act="delPoint" data-si="${si}" data-pi="${pi}" aria-label="刪除 ${esc(p.name)}">✕</button></td></tr>`).join('');
     const nb=st.points.filter(p=>p.role==='bs').length,nc=st.points.filter(p=>p.role==='ck').length;
     const w=[];if(nb!==1)w.push('需要剛好一個後視點');if(nc<1)w.push('缺少檢核點');
@@ -376,7 +385,7 @@ function renderEditor(){
     return `<div class="station">
       <div class="st-head"><span class="lbl">測站 ${si+1}${isAux?' <span class="role aux">補點設站</span>':''}</span>
         <label class="f">站名<input id="s${si}-name" data-si="${si}" data-f="name" value="${esc(st.name)}" list="ctrl-list"></label>
-        <label class="f">儀器高（m）<input class="num" id="s${si}-hi" data-si="${si}" data-f="hi" value="${esc(st.hi)}" inputmode="decimal"></label>
+        <label class="f">儀器高（m）<input class="num" id="s${si}-hi" data-si="${si}" data-f="hi" value="${esc(st.hi)}" placeholder="自動" inputmode="decimal"></label>
         <span class="sp"></span><button class="ghost" data-act="delStation" data-si="${si}">刪除測站</button></div>
       <div class="scroll"><table class="pts"><thead><tr><th>點號</th><th>類別</th><th>已知</th><th>水平角</th><th>天頂角</th><th>距離（m）</th><th>稜鏡高</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
       <div class="st-foot"><button data-act="addPoint" data-si="${si}" data-role="so">＋ 放樣點</button><button data-act="addPoint" data-si="${si}" data-role="aux">＋ 補點</button>${w.length?`<span class="warn">${w.join('，')}</span>`:''}</div></div>`;
@@ -396,7 +405,7 @@ function renderBook(){
   const head=['點號','類別','鏡位','水平角讀數','天頂角讀數','距離','2C（″）','指標差（″）','平均水平角','平均天頂角','平均距離（m）','稜鏡高（m）','較正確值差（m）'];
   S.stations.forEach((st,si)=>{
     let rows='',max2c=0,maxdd=0;const kn=[];
-    tsv.push(['測站',st.name,'儀器高',st.hi]);tsv.push(head);
+    tsv.push(['測站',st.name,'儀器高',stHi(si)]);tsv.push(head);
     st.points.forEach((p,pi)=>{
       const r=simulate(si,pi,p);sim[si+'-'+pi]=r;
       ['ha','za','d'].forEach(f=>{const el=document.getElementById(`s${si}-p${pi}-${f}`);if(el)el.classList.toggle('bad',!!(r.bad&&r.bad[f]))});
@@ -410,14 +419,14 @@ function renderBook(){
         <td class="m">${fmtAng(r.haL)}</td><td class="m">${za(r.zaL)}</td><td class="m">${r.d1.toFixed(3)}</td>
         <td rowspan="2" class="m">${sgnI(r.c2)}</td><td rowspan="2" class="m">${r.idx==null?'—':sgnI(r.idx)}</td>
         <td rowspan="2" class="m">${fmtAng(r.haM)}</td><td rowspan="2" class="m">${za(r.zaM)}</td>
-        <td rowspan="2" class="m">${r.dM.toFixed(3)}</td><td rowspan="2" class="m">${esc(p.ht||'')}</td>
+        <td rowspan="2" class="m">${r.dM.toFixed(3)}</td><td rowspan="2" class="m">${esc(r.ht)}</td>
         <td rowspan="2" class="m ${errCls}">${errTxt}</td></tr>
         <tr class="r"><td>倒</td><td class="m">${fmtAng(r.haR)}</td><td class="m">${za(r.zaR)}</td><td class="m">${r.d2.toFixed(3)}</td></tr>`;
-      tsv.push([p.name,ROLE[p.role]+(r.known?'(已知)':''),'正',fmtAng(r.haL),za(r.zaL),r.d1.toFixed(3),sgnI(r.c2),r.idx==null?'':sgnI(r.idx),fmtAng(r.haM),za(r.zaM),r.dM.toFixed(3),p.ht||'',r.known?errTxt:'']);
+      tsv.push([p.name,ROLE[p.role]+(r.known?'(已知)':''),'正',fmtAng(r.haL),za(r.zaL),r.d1.toFixed(3),sgnI(r.c2),r.idx==null?'':sgnI(r.idx),fmtAng(r.haM),za(r.zaM),r.dM.toFixed(3),r.ht,r.known?errTxt:'']);
       tsv.push(['','','倒',fmtAng(r.haR),za(r.zaR),r.d2.toFixed(3),'','','','','','','']);
     });
     tsv.push([]);
-    html+=`<div class="scroll"><table class="bk"><caption>測站 ${esc(st.name)}<small>儀器高 ${esc(st.hi)} m</small></caption>
+    html+=`<div class="scroll"><table class="bk"><caption>測站 ${esc(st.name)}<small>儀器高 ${esc(stHi(si))} m</small></caption>
       <thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
     sums.push(`<div class="sum"><strong>測站 ${esc(st.name)}</strong>
       <span>最大 |2C|：<span class="m">${max2c}″</span>　最大測距較差：<span class="m">${maxdd.toFixed(3)} m</span></span>
@@ -436,10 +445,10 @@ function renderBook(){
       const status=a.si<0?'尚未測設':early.length?'使用早於測設':'正常';
       const cls=status==='正常'?'ok':'bad';
       const uses=a.uses.length?a.uses.map(u=>`${u.station}站${u.what}`).join('、'):'—';
-      tsv.push([a.name,a.station||'',a.bs||'',ok?fmtAng(r.haM):'',ok&&r.zaM!=null?fmtAng(r.zaM):'',ok?r.dM.toFixed(3):'',a.p?a.p.ht||'':'',uses,status]);
+      tsv.push([a.name,a.station||'',a.bs||'',ok?fmtAng(r.haM):'',ok&&r.zaM!=null?fmtAng(r.zaM):'',ok?r.dM.toFixed(3):'',ok?r.ht:'',uses,status]);
       return `<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.station||'—')}</td><td>${esc(a.bs||'—')}</td>
         <td class="m">${ok?fmtAng(r.haM):'—'}</td><td class="m">${ok&&r.zaM!=null?fmtAng(r.zaM):'—'}</td><td class="m">${ok?r.dM.toFixed(3):'—'}</td>
-        <td class="m">${a.p?esc(a.p.ht||''):'—'}</td><td class="left">${esc(uses)}</td><td><span class="pill ${cls}">${status}</span></td></tr>`;
+        <td class="m">${ok?esc(r.ht):'—'}</td><td class="left">${esc(uses)}</td><td><span class="pill ${cls}">${status}</span></td></tr>`;
     }).join('');
     tsv.push([]);
     html+=`<div class="scroll"><table class="bk narrow"><caption>補點（暫時性控制點）清單<small>依測站順序判斷，補點須先測設才能設站或當後視</small></caption>
@@ -488,15 +497,15 @@ document.addEventListener('click',e=>{
     document.getElementById('inst-form').hidden=true}
   else if(a==='delInst'){if(S.instruments.length<2)return;S.instruments.splice(S.inst,1);S.inst=0}
   else if(a==='reseed'){S.cfg.seed=Math.floor(Math.random()*1e8)}
-  else if(a==='addStation'){S.stations.push({name:'',hi:'1.500',points:[
-      {name:'',role:'bs',known:true,ha:'0.0000',za:'',d:'',ht:'1.500'},{name:'',role:'ck',known:true,ha:'',za:'',d:'',ht:'1.500'}]})}
+  else if(a==='addStation'){S.stations.push({name:'',hi:'',points:[
+      {name:'',role:'bs',known:true,ha:'0.0000',za:'',d:'',ht:''},{name:'',role:'ck',known:true,ha:'',za:'',d:'',ht:''}]})}
   else if(a==='delStation'){S.stations.splice(si,1)}
   else if(a==='addPoint'){
     const role=b.dataset.role,all=S.stations.flatMap(s=>s.points);
     let name;
     if(role==='aux'){const n=Math.max(0,...all.map(p=>/^Q(\d+)$/i.exec(p.name||'')).filter(Boolean).map(x=>+x[1]))+1;name='Q'+String(n).padStart(2,'0')}
     else{const n=Math.max(100,...all.filter(p=>/^\d+$/.test(p.name||'')).map(p=>+p.name))+1;name=String(n)}
-    S.stations[si].points.push({name,role,known:false,ha:'',za:'',d:'',ht:role==='aux'?'1.500':'1.300'})}
+    S.stations[si].points.push({name,role,known:false,ha:'',za:'',d:'',ht:''})}
   else if(a==='delPoint'){S.stations[si].points.splice(pi,1)}
   else if(a==='loadSample'){S=fixup(clone(SAMPLE));flash('json-msg','已載入範例')}
   else if(a==='copyJson'){copy(JSON.stringify(S),'json-box','json-msg');return}
